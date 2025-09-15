@@ -1,0 +1,88 @@
+[18:45:37] [ServerMain/INFO]: [bootstrap] Running Java 21 (OpenJDK 64-Bit Server VM 21.0.7+6-LTS; Azul Systems, Inc. Zulu21.42+19-CA) on Windows 11 10.0 (amd64)
+[18:45:37] [ServerMain/INFO]: [bootstrap] Loading Paper 1.21.1-133-ver/1.21.1@3cb8529 (2025-03-28T16:14:36Z) for Minecraft 1.21.1
+[18:45:38] [ServerMain/INFO]: [PluginInitializerManager] Initializing plugins...
+[18:45:39] [Paper Plugin Remapper Thread - 0/INFO]: [PluginRemapper] Remapping plugin 'C:\Users\hendr\IdeaProjects\ExternalServerPing\build\libs\ExternalServerPing-1.0.jar'...
+[18:45:39] [Paper Plugin Remapper Thread - 0/INFO]: [PluginRemapper] Done remapping plugin 'C:\Users\hendr\IdeaProjects\ExternalServerPing\build\libs\ExternalServerPing-1.0.jar' in 362ms.
+[18:45:39] [ServerMain/INFO]: [PluginInitializerManager] Initialized 2 plugins
+[18:45:39] [ServerMain/INFO]: [PluginInitializerManager] Bukkit plugins (2):
+ - ExternalServerPing (1.0), PlaceholderAPI (2.11.6)
+[18:45:45] [ServerMain/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[18:45:47] [ServerMain/INFO]: Loaded 1290 recipes
+[18:45:47] [ServerMain/INFO]: Loaded 1399 advancements
+[18:45:47] [Server thread/INFO]: Starting minecraft server version 1.21.1
+[18:45:47] [Server thread/INFO]: Loading properties
+[18:45:47] [Server thread/INFO]: This server is running Paper version 1.21.1-133-ver/1.21.1@3cb8529 (2025-03-28T16:14:36Z) (Implementing API version 1.21.1-R0.1-SNAPSHOT)
+[18:45:48] [Server thread/INFO]: [spark] This server bundles the spark profiler. For more information please visit https://docs.papermc.io/paper/profiling
+[18:45:48] [Server thread/INFO]: Server Ping Player Sample Count: 12
+[18:45:48] [Server thread/INFO]: Using 4 threads for Netty based IO
+[18:45:49] [Server thread/INFO]: [ChunkTaskScheduler] Chunk system is using 1 I/O threads, 3 worker threads, and population gen parallelism of 3 threads
+[18:45:50] [Server thread/INFO]: Default game type: SURVIVAL
+[18:45:50] [Server thread/INFO]: Generating keypair
+[18:45:50] [Server thread/INFO]: Starting Minecraft server on *:25565
+[18:45:50] [Server thread/INFO]: Using default channel type
+[18:45:50] [Server thread/INFO]: Paper: Using Java compression from Velocity.
+[18:45:50] [Server thread/INFO]: Paper: Using Java cipher from Velocity.
+[18:45:50] [Server thread/INFO]: [PlaceholderAPI] Loading server plugin PlaceholderAPI v2.11.6
+[18:45:50] [Server thread/INFO]: [ExternalServerPing] Loading server plugin ExternalServerPing v1.0
+[18:45:50] [Server thread/INFO]: Server permissions file permissions.yml is empty, ignoring it
+[18:45:50] [Server thread/INFO]: Preparing level "world"
+[18:45:52] [Server thread/INFO]: Preparing start region for dimension minecraft:overworld
+[18:45:54] [Server thread/INFO]: Time elapsed: 2310 ms
+[18:45:54] [Server thread/INFO]: Preparing start region for dimension minecraft:the_nether
+[18:45:54] [Server thread/INFO]: Time elapsed: 278 ms
+[18:45:54] [Server thread/INFO]: Preparing start region for dimension minecraft:the_end
+[18:45:54] [Server thread/INFO]: Time elapsed: 245 ms
+[18:45:54] [Server thread/INFO]: [PlaceholderAPI] Enabling PlaceholderAPI v2.11.6
+[18:45:55] [Server thread/INFO]: [PlaceholderAPI] Fetching available expansion information...
+[18:45:55] [Server thread/INFO]: [ExternalServerPing] Enabling ExternalServerPing v1.0
+[18:45:56] [Server thread/INFO]: [ExternalServerPing] Pinging play.minekeep.net:25565 every 1 seconds.
+[18:45:56] [Server thread/INFO]: [PlaceholderAPI] Successfully registered internal expansion: externalserver [1.0]
+[18:45:56] [Server thread/INFO]: [ExternalServerPing] External Server Ping Plugin enabled!
+[18:45:56] [Server thread/INFO]: [spark] Starting background profiler...
+[18:45:56] [Server thread/INFO]: [spark] The async-profiler engine is not supported for your os/arch (windows11/amd64), so the built-in Java engine will be used instead.
+[18:45:56] [Server thread/INFO]: [PlaceholderAPI] Placeholder expansion registration initializing...
+[18:45:56] [Server thread/INFO]: 0 placeholder hook(s) registered!
+[18:45:56] [Server thread/INFO]: Done preparing level "world" (5.381s)
+[18:45:56] [Server thread/INFO]: Running delayed init tasks
+[18:45:56] [Server thread/INFO]: Done (20.113s)! For help, type "help"
+[18:45:56] [Server thread/INFO]: Timings Reset
+[18:46:46] [User Authenticator #0/INFO]: UUID of player LeakMaster is 7e9fe4d5-4994-4492-a042-fcd762c2f5ab
+[18:46:46] [Server thread/INFO]: LeakMaster joined the game
+[18:46:47] [Server thread/INFO]: LeakMaster[/127.0.0.1:61370] logged in with entity id 27 at ([world]106.85167730528741, 118.15814676123665, -31.56058841014123)
+[18:46:47] [Server thread/WARN]: [ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup] Entity uuid already exists: 070984ea-6efe-478a-8cb1-d89e24ec6eaf, mapped to Bat['Bat'/50, uuid='070984ea-6efe-478a-8cb1-d89e24ec6eaf', l='ServerLevel[world]', x=70.94, y=31.85, z=-48.27, cpos=[4, -4], tl=599, v=true], can't add Bat['Bat'/55, uuid='070984ea-6efe-478a-8cb1-d89e24ec6eaf', l='ServerLevel[world]', x=71.77, y=31.55, z=-47.16, cpos=[4, -3], tl=591, v=false]
+[18:46:47] [Server thread/WARN]: [ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup] Entity uuid already exists: 0b76b03c-5d30-4c68-a13d-70c69dcb9ba1, mapped to Bat['Bat'/10, uuid='0b76b03c-5d30-4c68-a13d-70c69dcb9ba1', l='ServerLevel[world]', x=46.55, y=24.58, z=-39.25, cpos=[2, -3], tl=452, v=true], can't add Bat['Bat'/96, uuid='0b76b03c-5d30-4c68-a13d-70c69dcb9ba1', l='ServerLevel[world]', x=46.26, y=20.45, z=-48.66, cpos=[2, -4], tl=560, v=false]
+[18:46:47] [Server thread/WARN]: [ca.spottedleaf.moonrise.patches.chunk_system.level.entity.EntityLookup] Entity uuid already exists: d4e462f4-e5a3-4f32-8064-e1142a6f30ef, mapped to Bat['Bat'/66, uuid='d4e462f4-e5a3-4f32-8064-e1142a6f30ef', l='ServerLevel[world]', x=104.70, y=39.03, z=-95.11, cpos=[6, -6], tl=840, v=true], can't add Bat['Bat'/106, uuid='d4e462f4-e5a3-4f32-8064-e1142a6f30ef', l='ServerLevel[world]', x=120.62, y=38.88, z=-96.17, cpos=[7, -7], tl=940, v=false]
+[19:13:10] [Server thread/INFO]: LeakMaster lost connection: Disconnected
+[19:13:10] [Server thread/INFO]: LeakMaster left the game
+[19:13:14] [User Authenticator #1/INFO]: UUID of player LeakMaster is 7e9fe4d5-4994-4492-a042-fcd762c2f5ab
+[19:13:15] [Server thread/INFO]: LeakMaster joined the game
+[19:13:15] [Server thread/INFO]: LeakMaster[/127.0.0.1:64727] logged in with entity id 2343 at ([world]107.86826699921599, 124.41424525952915, -49.60950116883487)
+[19:13:18] [Server thread/INFO]: LeakMaster issued server command: /stop
+[19:13:18] [Server thread/INFO]: [LeakMaster: Stopping the server]
+[19:13:18] [Server thread/INFO]: Stopping server
+[19:13:18] [Server thread/INFO]: [ExternalServerPing] Disabling ExternalServerPing v1.0
+[19:13:18] [Server thread/INFO]: [ExternalServerPing] External Server Ping Plugin disabled!
+[19:13:18] [Server thread/INFO]: [PlaceholderAPI] Disabling PlaceholderAPI v2.11.6
+[19:13:18] [Server thread/INFO]: Saving players
+[19:13:18] [Server thread/INFO]: LeakMaster lost connection: Server closed
+[19:13:19] [Server thread/INFO]: LeakMaster left the game
+[19:13:19] [Server thread/INFO]: Saving worlds
+[19:13:19] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'world'
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'world'
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'world'
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Saved 141 block chunks, 159 entity chunks, 0 poi chunks in world 'world' in 0,61s
+[19:13:19] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world_nether]'/minecraft:the_nether
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'world_nether'
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'world_nether'
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'world_nether'
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Saved 0 block chunks, 0 entity chunks, 0 poi chunks in world 'world_nether' in 0,01s
+[19:13:19] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world_the_end]'/minecraft:the_end
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Waiting 60s for chunk system to halt for world 'world_the_end'
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Halted chunk system for world 'world_the_end'
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Saving all chunkholders for world 'world_the_end'
+[19:13:19] [Server thread/INFO]: [ChunkHolderManager] Saved 0 block chunks, 10 entity chunks, 0 poi chunks in world 'world_the_end' in 0,03s
+[19:13:19] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[19:13:19] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[19:13:19] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[19:13:19] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved

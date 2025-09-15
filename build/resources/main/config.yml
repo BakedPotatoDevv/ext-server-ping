@@ -1,0 +1,4 @@
+server-ip: example.com
+server-port: 25565
+update-interval: 30 # in seconds
+debug: false

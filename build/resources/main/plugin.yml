@@ -1,0 +1,14 @@
+name: ExternalServerPing
+version: '1.0'
+main: potato.baked.externalServerPing.ExternalServerPing
+api-version: '1.21'
+authors: [ BakedPotato ]
+description: "A simple mod specifically made for MineKeep servers - PAPI support"
+depend: [ PlaceholderAPI ]
+commands:
+  externalserver:
+    description: Manage ExternalServerPing plugin
+    usage: /externalserver reload
+    aliases: [es]
+    permission: extserverping.reload
+    permission-message: §cYou do not have the required permission to execute this command!

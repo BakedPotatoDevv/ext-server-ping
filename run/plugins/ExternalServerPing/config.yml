@@ -1,0 +1,4 @@
+server-ip: play.minekeep.net
+server-port: 25565
+update-interval: 1 # in seconds
+debug: false
