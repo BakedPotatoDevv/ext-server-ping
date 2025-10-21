@@ -46,6 +46,9 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
 
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new ExternalServerPingPlaceholder().register();
+            getLogger().info("Hooked into PlaceholderAPI successfully!");
+        } else {
+            getLogger().warning("PlaceholderAPI not found — placeholders will be unavailable.");
         }
 
         getLogger().info("External Server Ping Plugin enabled!");
@@ -98,7 +101,6 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
 
                     readVarInt(in);
                     int packetId = readVarInt(in);
-
                     if (packetId != 0x00) {
                         throw new IOException("Invalid packet ID");
                     }
@@ -116,11 +118,9 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
                     String json = new String(data);
 
                     JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
-
                     onlinePlayers = jsonObject.getAsJsonObject("players").get("online").getAsInt();
                     maxPlayers = jsonObject.getAsJsonObject("players").get("max").getAsInt();
 
-                    // MOTD kann ein String oder ein Objekt sein, daher Check
                     if (jsonObject.get("description").isJsonPrimitive()) {
                         motd = jsonObject.get("description").getAsString();
                     } else {
@@ -131,7 +131,7 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
                     serverOnline = true;
 
                     if (debug) {
-                        getLogger().info("[ExternalServerPing] Ping success: online=" + onlinePlayers + ", max=" + maxPlayers + ", motd=" + motd + ", ping=" + ping + "ms");
+                        getLogger().info("[ExternalServerPing] Success: online=" + onlinePlayers + ", max=" + maxPlayers + ", motd=" + motd + ", ping=" + ping + "ms");
                     }
 
                 } catch (Exception e) {
@@ -192,9 +192,15 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
     }
 
     public class ExternalServerPingPlaceholder extends PlaceholderExpansion {
+
         @Override
         public boolean canRegister() {
             return true;
+        }
+
+        @Override
+        public boolean persist() {
+            return true; // ✅ Keeps this expansion registered after /papi reload
         }
 
         @Override
@@ -204,7 +210,7 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
 
         @Override
         public String getAuthor() {
-            return "Leaky + ChatGPT";
+            return "BakedPotato";
         }
 
         @Override
