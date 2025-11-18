@@ -1,26 +1,29 @@
 plugins {
     id 'java'
     id("xyz.jpenilla.run-paper") version "2.3.1"
+    id 'io.github.goooler.shadow' version '8.1.8'
 }
 
 group = 'potato.baked'
-version = '2.0-EXPERIMENTAL'
+version = '2.0-BETA'
 
 repositories {
     mavenCentral()
+
     maven {
         name = "papermc-repo"
         url = "https://repo.papermc.io/repository/maven-public/"
     }
+
     maven {
         name = "sonatype"
         url = "https://oss.sonatype.org/content/groups/public/"
     }
+
     flatDir {
         dirs 'libs'
     }
 }
-
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
@@ -31,8 +34,19 @@ dependencies {
 
 tasks {
     runServer {
-        // Uses Paper 1.21.1
         minecraftVersion("1.21.1")
+    }
+
+    shadowJar {
+        archiveClassifier.set('main')
+
+        relocate 'net.dv8tion', 'potato.baked.externalServerPing.libs.jda'
+
+        relocate 'com.google.gson', 'potato.baked.externalServerPing.libs.gson'
+    }
+
+    build {
+        dependsOn(shadowJar)
     }
 }
 
