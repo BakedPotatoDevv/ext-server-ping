@@ -2,7 +2,7 @@ package potato.baked.externalServerPing.discordIntegration;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class EmbedBuilderUtil {
 

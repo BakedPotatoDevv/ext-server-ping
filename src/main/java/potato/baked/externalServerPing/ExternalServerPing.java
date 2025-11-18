@@ -1,5 +1,6 @@
 package potato.baked.externalServerPing;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -11,16 +12,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.NotNull;
 import potato.baked.externalServerPing.discordIntegration.DiscordBotManager;
 import potato.baked.externalServerPing.discordIntegration.DiscordConfig;
+import potato.baked.externalServerPing.discordIntegration.EmbedBuilderUtil;
 import potato.baked.externalServerPing.discordIntegration.ServerStatusUpdater;
 
-import javax.security.auth.login.LoginException;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 
 public final class ExternalServerPing extends JavaPlugin implements TabExecutor {
@@ -37,7 +40,7 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
     private int ping = -1;
     private boolean serverOnline = false;
 
-    // Discord integration
+    // Discord
     private DiscordBotManager discordBot;
     private ServerStatusUpdater discordUpdater;
 
@@ -49,8 +52,8 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
         getLogger().info("Pinging " + serverIp + ":" + serverPort + " every " + updateInterval + " seconds.");
         startPinging(serverIp, serverPort, updateInterval);
 
-        getCommand("externalserver").setExecutor(this);
-        getCommand("externalserver").setTabCompleter(this);
+        Objects.requireNonNull(getCommand("externalserver")).setExecutor(this);
+        Objects.requireNonNull(getCommand("externalserver")).setTabCompleter(this);
 
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             new ExternalServerPingPlaceholder().register();
@@ -59,14 +62,14 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
             getLogger().warning("PlaceholderAPI not found — placeholders will be unavailable.");
         }
 
-        // Initialize Discord bot
+        // Discord setup
         DiscordConfig discordConfig = new DiscordConfig(getConfig());
         discordBot = new DiscordBotManager(this, discordConfig);
         try {
             discordBot.startBot();
             discordUpdater = new ServerStatusUpdater(this, discordBot, this);
             discordUpdater.startUpdater(updateInterval);
-        } catch (LoginException e) {
+        } catch (IllegalArgumentException e) {
             getLogger().log(Level.WARNING, "[Discord] Failed to start bot", e);
         }
 
@@ -75,24 +78,29 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
 
     @Override
     public void onDisable() {
-        if (pingTask != null) {
-            pingTask.cancel();
-        }
+        if (pingTask != null) pingTask.cancel();
 
-        // Force final offline embed
         if (discordUpdater != null && discordBot != null) {
-            TextChannel channel = discordBot.getChannel();
+            var channel = discordBot.getChannel();
             if (channel != null) {
-                channel.sendMessageEmbeds(
-                        potato.baked.externalServerPing.discordIntegration.EmbedBuilderUtil.buildOfflineEmbed().build()
-                ).queue();
+                long mid = discordBot.getMessageId();
+                if (mid > 0) {
+                    // try to edit the configured message
+                    channel.retrieveMessageById(mid).queue(
+                            msg -> msg.editMessageEmbeds(potato.baked.externalServerPing.discordIntegration.EmbedBuilderUtil.buildOfflineEmbed().build()).queue(),
+                            err -> {
+                                // couldn't fetch or edit -> fallback to sending a new message (less noisy)
+                                channel.sendMessageEmbeds(potato.baked.externalServerPing.discordIntegration.EmbedBuilderUtil.buildOfflineEmbed().build()).queue();
+                            }
+                    );
+                } else {
+                    // no configured id -> send a new message
+                    channel.sendMessageEmbeds(potato.baked.externalServerPing.discordIntegration.EmbedBuilderUtil.buildOfflineEmbed().build()).queue();
+                }
             }
         }
 
-        if (discordBot != null) {
-            discordBot.shutdownBot();
-        }
-
+        if (discordBot != null) discordBot.shutdownBot();
         getLogger().info("External Server Ping Plugin disabled!");
     }
 
@@ -153,7 +161,7 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
                     maxPlayers = jsonObject.getAsJsonObject("players").get("max").getAsInt();
                     motd = jsonObject.get("description").isJsonPrimitive() ?
                             jsonObject.get("description").getAsString() :
-                            jsonObject.getAsJsonObject("description").toString();
+                            flattenMotd(jsonObject.getAsJsonObject("description"));
 
                     ping = (int) (System.currentTimeMillis() - start);
                     serverOnline = true;
@@ -165,11 +173,22 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
                     motd = "Unavailable";
                     ping = -1;
                     serverOnline = false;
-
                     if (debug) getLogger().log(Level.WARNING, "[ExternalServerPing] Ping failed", e);
                 }
             }
         }.runTaskTimerAsynchronously(this, 0L, 20L * interval);
+    }
+
+    private String flattenMotd(JsonObject obj) {
+        StringBuilder sb = new StringBuilder();
+        if (obj.has("text")) sb.append(obj.get("text").getAsString());
+        if (obj.has("extra")) {
+            for (JsonElement element : obj.getAsJsonArray("extra")) {
+                if (element.isJsonObject()) sb.append(flattenMotd(element.getAsJsonObject()));
+                else if (element.isJsonPrimitive()) sb.append(element.getAsString());
+            }
+        }
+        return sb.toString();
     }
 
     private static void writeVarInt(OutputStream out, int value) throws IOException {
@@ -181,12 +200,11 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
     }
 
     private static int readVarInt(InputStream in) throws IOException {
-        int numRead = 0;
-        int result = 0;
+        int numRead = 0, result = 0;
         byte read;
         do {
             read = (byte) in.read();
-            int value = (read & 0b01111111);
+            int value = read & 0b01111111;
             result |= (value << (7 * numRead));
             numRead++;
             if (numRead > 5) throw new IOException("VarInt too big");
@@ -195,13 +213,25 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             reloadConfig();
             loadConfigValues();
             startPinging(serverIp, serverPort, updateInterval);
-            if (discordUpdater != null) discordUpdater.startUpdater(updateInterval);
-            sender.sendMessage("§a[ExternalServerPing] Configuration reloaded and ping task restarted!");
+
+            if (discordBot != null) discordBot.shutdownBot();
+            DiscordConfig discordConfig = new DiscordConfig(getConfig());
+            discordBot = new DiscordBotManager(this, discordConfig);
+            try {
+                discordBot.startBot();
+                if (discordUpdater != null) discordUpdater.stopUpdater();
+                discordUpdater = new ServerStatusUpdater(this, discordBot, this);
+                discordUpdater.startUpdater(updateInterval);
+                sender.sendMessage("§a[ExternalServerPing] Configuration reloaded and Discord bot restarted successfully!");
+            } catch (IllegalArgumentException e) {
+                sender.sendMessage("§c[ExternalServerPing] Failed to restart Discord bot: " + e.getMessage());
+                getLogger().log(Level.WARNING, "[Discord] Failed to restart bot", e);
+            }
             return true;
         }
         sender.sendMessage("§eUsage: /externalserver reload");
@@ -209,31 +239,30 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1) return Collections.singletonList("reload");
-        return Collections.emptyList();
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
+        return args.length == 1 ? Collections.singletonList("reload") : Collections.emptyList();
     }
 
     public class ExternalServerPingPlaceholder extends PlaceholderExpansion {
         @Override public boolean canRegister() { return true; }
         @Override public boolean persist() { return true; }
-        @Override public String getIdentifier() { return "externalserver"; }
-        @Override public String getAuthor() { return "BakedPotato"; }
-        @Override public String getVersion() { return "2.0-EXPERIMENTAL"; }
+        @Override public @NotNull String getIdentifier() { return "externalserver"; }
+        @Override public @NotNull String getAuthor() { return "BakedPotato"; }
+        @Override public @NotNull String getVersion() { return "2.0-BETA"; }
         @Override
         public String onPlaceholderRequest(Player player, String identifier) {
-            switch (identifier.toLowerCase()) {
-                case "online": return String.valueOf(onlinePlayers);
-                case "max": return String.valueOf(maxPlayers);
-                case "motd": return motd;
-                case "ping": return ping >= 0 ? String.valueOf(ping) : "Unavailable";
-                case "status": return serverOnline ? "Online" : "Offline";
-                default: return null;
-            }
+            return switch (identifier.toLowerCase()) {
+                case "online" -> String.valueOf(onlinePlayers);
+                case "max" -> String.valueOf(maxPlayers);
+                case "motd" -> motd;
+                case "ping" -> ping >= 0 ? String.valueOf(ping) : "Unavailable";
+                case "status" -> serverOnline ? "Online" : "Offline";
+                default -> null;
+            };
         }
     }
 
-    // Getters for Discord updater
+    // Getters
     public int getOnlinePlayers() { return onlinePlayers; }
     public int getMaxPlayers() { return maxPlayers; }
     public String getMotd() { return motd; }
