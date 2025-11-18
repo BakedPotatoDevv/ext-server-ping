@@ -3,6 +3,7 @@ package potato.baked.externalServerPing;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -10,7 +11,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import potato.baked.externalServerPing.discordIntegration.DiscordBotManager;
+import potato.baked.externalServerPing.discordIntegration.DiscordConfig;
+import potato.baked.externalServerPing.discordIntegration.ServerStatusUpdater;
 
+import javax.security.auth.login.LoginException;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -32,13 +37,16 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
     private int ping = -1;
     private boolean serverOnline = false;
 
+    // Discord integration
+    private DiscordBotManager discordBot;
+    private ServerStatusUpdater discordUpdater;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
         loadConfigValues();
 
         getLogger().info("Pinging " + serverIp + ":" + serverPort + " every " + updateInterval + " seconds.");
-
         startPinging(serverIp, serverPort, updateInterval);
 
         getCommand("externalserver").setExecutor(this);
@@ -51,6 +59,17 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
             getLogger().warning("PlaceholderAPI not found — placeholders will be unavailable.");
         }
 
+        // Initialize Discord bot
+        DiscordConfig discordConfig = new DiscordConfig(getConfig());
+        discordBot = new DiscordBotManager(this, discordConfig);
+        try {
+            discordBot.startBot();
+            discordUpdater = new ServerStatusUpdater(this, discordBot, this);
+            discordUpdater.startUpdater(updateInterval);
+        } catch (LoginException e) {
+            getLogger().log(Level.WARNING, "[Discord] Failed to start bot", e);
+        }
+
         getLogger().info("External Server Ping Plugin enabled!");
     }
 
@@ -59,6 +78,21 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
         if (pingTask != null) {
             pingTask.cancel();
         }
+
+        // Force final offline embed
+        if (discordUpdater != null && discordBot != null) {
+            TextChannel channel = discordBot.getChannel();
+            if (channel != null) {
+                channel.sendMessageEmbeds(
+                        potato.baked.externalServerPing.discordIntegration.EmbedBuilderUtil.buildOfflineEmbed().build()
+                ).queue();
+            }
+        }
+
+        if (discordBot != null) {
+            discordBot.shutdownBot();
+        }
+
         getLogger().info("External Server Ping Plugin disabled!");
     }
 
@@ -70,9 +104,8 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
     }
 
     public void startPinging(String ip, int port, int interval) {
-        if (pingTask != null) {
-            pingTask.cancel();
-        }
+        if (pingTask != null) pingTask.cancel();
+
         pingTask = new BukkitRunnable() {
             @Override
             public void run() {
@@ -80,6 +113,7 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
                 try (Socket socket = new Socket()) {
                     if (debug) getLogger().info("[ExternalServerPing] Connecting to " + ip + ":" + port);
                     socket.connect(new InetSocketAddress(ip, port), 7000);
+
                     OutputStream out = socket.getOutputStream();
                     InputStream in = socket.getInputStream();
 
@@ -101,38 +135,30 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
 
                     readVarInt(in);
                     int packetId = readVarInt(in);
-                    if (packetId != 0x00) {
-                        throw new IOException("Invalid packet ID");
-                    }
+                    if (packetId != 0x00) throw new IOException("Invalid packet ID");
 
                     int stringLength = readVarInt(in);
                     byte[] data = new byte[stringLength];
                     int bytesRead = 0;
                     while (bytesRead < data.length) {
                         int result = in.read(data, bytesRead, data.length - bytesRead);
-                        if (result == -1) {
-                            throw new IOException("Unexpected end of stream while reading data.");
-                        }
+                        if (result == -1) throw new IOException("Unexpected end of stream while reading data.");
                         bytesRead += result;
                     }
-                    String json = new String(data);
 
+                    String json = new String(data);
                     JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+
                     onlinePlayers = jsonObject.getAsJsonObject("players").get("online").getAsInt();
                     maxPlayers = jsonObject.getAsJsonObject("players").get("max").getAsInt();
-
-                    if (jsonObject.get("description").isJsonPrimitive()) {
-                        motd = jsonObject.get("description").getAsString();
-                    } else {
-                        motd = jsonObject.getAsJsonObject("description").toString();
-                    }
+                    motd = jsonObject.get("description").isJsonPrimitive() ?
+                            jsonObject.get("description").getAsString() :
+                            jsonObject.getAsJsonObject("description").toString();
 
                     ping = (int) (System.currentTimeMillis() - start);
                     serverOnline = true;
 
-                    if (debug) {
-                        getLogger().info("[ExternalServerPing] Success: online=" + onlinePlayers + ", max=" + maxPlayers + ", motd=" + motd + ", ping=" + ping + "ms");
-                    }
+                    if (debug) getLogger().info("[ExternalServerPing] Success: online=" + onlinePlayers + ", max=" + maxPlayers + ", motd=" + motd + ", ping=" + ping + "ms");
 
                 } catch (Exception e) {
                     onlinePlayers = 0;
@@ -140,9 +166,7 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
                     ping = -1;
                     serverOnline = false;
 
-                    if (debug) {
-                        getLogger().log(Level.WARNING, "[ExternalServerPing] Ping failed", e);
-                    }
+                    if (debug) getLogger().log(Level.WARNING, "[ExternalServerPing] Ping failed", e);
                 }
             }
         }.runTaskTimerAsynchronously(this, 0L, 20L * interval);
@@ -176,6 +200,7 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
             reloadConfig();
             loadConfigValues();
             startPinging(serverIp, serverPort, updateInterval);
+            if (discordUpdater != null) discordUpdater.startUpdater(updateInterval);
             sender.sendMessage("§a[ExternalServerPing] Configuration reloaded and ping task restarted!");
             return true;
         }
@@ -185,55 +210,33 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1) {
-            return Collections.singletonList("reload");
-        }
+        if (args.length == 1) return Collections.singletonList("reload");
         return Collections.emptyList();
     }
 
     public class ExternalServerPingPlaceholder extends PlaceholderExpansion {
-
-        @Override
-        public boolean canRegister() {
-            return true;
-        }
-
-        @Override
-        public boolean persist() {
-            return true; // ✅ Keeps this expansion registered after /papi reload
-        }
-
-        @Override
-        public String getIdentifier() {
-            return "externalserver";
-        }
-
-        @Override
-        public String getAuthor() {
-            return "BakedPotato";
-        }
-
-        @Override
-        public String getVersion() {
-            return "1.0";
-        }
-
+        @Override public boolean canRegister() { return true; }
+        @Override public boolean persist() { return true; }
+        @Override public String getIdentifier() { return "externalserver"; }
+        @Override public String getAuthor() { return "BakedPotato"; }
+        @Override public String getVersion() { return "2.0-EXPERIMENTAL"; }
         @Override
         public String onPlaceholderRequest(Player player, String identifier) {
             switch (identifier.toLowerCase()) {
-                case "online":
-                    return String.valueOf(onlinePlayers);
-                case "max":
-                    return String.valueOf(maxPlayers);
-                case "motd":
-                    return motd;
-                case "ping":
-                    return ping >= 0 ? String.valueOf(ping) : "Unavailable";
-                case "status":
-                    return serverOnline ? "Online" : "Offline";
-                default:
-                    return null;
+                case "online": return String.valueOf(onlinePlayers);
+                case "max": return String.valueOf(maxPlayers);
+                case "motd": return motd;
+                case "ping": return ping >= 0 ? String.valueOf(ping) : "Unavailable";
+                case "status": return serverOnline ? "Online" : "Offline";
+                default: return null;
             }
         }
     }
+
+    // Getters for Discord updater
+    public int getOnlinePlayers() { return onlinePlayers; }
+    public int getMaxPlayers() { return maxPlayers; }
+    public String getMotd() { return motd; }
+    public int getPing() { return ping; }
+    public boolean isServerOnline() { return serverOnline; }
 }
