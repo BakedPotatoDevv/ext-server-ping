@@ -80,27 +80,26 @@ public final class ExternalServerPing extends JavaPlugin implements TabExecutor 
     public void onDisable() {
         if (pingTask != null) pingTask.cancel();
 
+        // Use the special host-offline embed instead of the target offline embed
         if (discordUpdater != null && discordBot != null) {
-            var channel = discordBot.getChannel();
+            TextChannel channel = discordBot.getChannel();
             if (channel != null) {
                 long mid = discordBot.getMessageId();
+                var embed = EmbedBuilderUtil.buildHostOfflineEmbed().build();
+
                 if (mid > 0) {
-                    // try to edit the configured message
                     channel.retrieveMessageById(mid).queue(
-                            msg -> msg.editMessageEmbeds(potato.baked.externalServerPing.discordIntegration.EmbedBuilderUtil.buildOfflineEmbed().build()).queue(),
-                            err -> {
-                                // couldn't fetch or edit -> fallback to sending a new message (less noisy)
-                                channel.sendMessageEmbeds(potato.baked.externalServerPing.discordIntegration.EmbedBuilderUtil.buildOfflineEmbed().build()).queue();
-                            }
+                            msg -> msg.editMessageEmbeds(embed).queue(),
+                            err -> channel.sendMessageEmbeds(embed).queue()
                     );
                 } else {
-                    // no configured id -> send a new message
-                    channel.sendMessageEmbeds(potato.baked.externalServerPing.discordIntegration.EmbedBuilderUtil.buildOfflineEmbed().build()).queue();
+                    channel.sendMessageEmbeds(embed).queue();
                 }
             }
         }
 
         if (discordBot != null) discordBot.shutdownBot();
+
         getLogger().info("External Server Ping Plugin disabled!");
     }
 
